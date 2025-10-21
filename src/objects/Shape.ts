@@ -1,94 +1,108 @@
-import Phaser from "phaser";
-import { CONFIG } from "../config/gameConfig";
 import type { ShapeType } from "../types/shape";
 import { SHAPES, SHAPE_COLORS } from "../constants/shape";
-import { ASSETS } from "../config/assetKeys";
 
-export default class Shape extends Phaser.GameObjects.Container {
-    private blockSize = CONFIG.blockSize;
+export default class Shape {
     public shapeWidth = 0;
     public shapeHeight = 0;
     public currentPattern!: number[][];
     private tintColor = 0xffffff;
+    private _x: number;
+    private _y: number;
+
+    public get x() { return this._x; }
+    public get y() { return this._y; }
 
     constructor(
-        scene: Phaser.Scene,
         x: number,
         y: number,
         private shapeType: ShapeType
     ) {
-        super(scene, x * CONFIG.blockSize, y * CONFIG.blockSize);
+        this._x = x;
+        this._y = y;
         this.createBlock();
     }
 
-    public createBlock() {
+    private createBlock() {
         const shapePattern = SHAPES[this.shapeType];
-        this.currentPattern = shapePattern;
+        this.currentPattern = shapePattern.map(row => [...row]);
         this.tintColor = SHAPE_COLORS[this.shapeType] || 0xffffff;
-        this.renderPattern(shapePattern);
+        this.updateDimensions();
     }
 
-    public getShapeHeight() {
-        let maxY = 0;
-        this.iterate((child: Phaser.GameObjects.Image) => {
-            if (child.y > maxY) maxY = child.y;
-        });
-        return maxY + this.blockSize;
+    private updateDimensions() {
+        this.shapeHeight = this.currentPattern.length;
+        this.shapeWidth = this.currentPattern[0].length;
     }
 
-    public getShapeWidth() {
-        let maxX = 0;
-        this.iterate((child: Phaser.GameObjects.Image) => {
-            if (child.x > maxX) maxX = child.x;
-        });
-        return maxX + this.blockSize;
-    }
+    public move(
+        direction: 'down' | 'left' | 'right',
+        checkCollision?: (x: number, y: number, pattern: number[][]) => boolean
+    ) {
+        let newX = this.x;
+        let newY = this.y;
 
-    public dropDown() {
-        this.y += this.blockSize;
-    }
+        switch (direction) {
+            case 'down':
+                newY += 1;
+                break;
+            case 'left':
+                newX -= 1;
+                break;
+            case 'right':
+                newX += 1;
+                break;
+        }
 
-    public moveLeft() {
-        const newX = this.x - this.blockSize;
-        if (newX >= 0) {
-            this.x = newX;
+        if (!checkCollision || !checkCollision(newX, newY, this.currentPattern)) {
+            this._x = newX;
+            this._y = newY;
         }
     }
 
-    public moveRight() {
-        const newX = this.x + this.blockSize;
-        if (newX + this.shapeWidth <= CONFIG.cols * CONFIG.blockSize) {
-            this.x = newX;
+    public rotate(direction: 'clockwise' | "counterclockwise" = 'clockwise') {
+        let newPattern;
+        if (direction === 'clockwise') {
+            newPattern = this.currentPattern[0].map((_, colIndex) =>
+                this.currentPattern.map(row => row[colIndex]).reverse()
+            );
+        } else if (direction === 'counterclockwise') {
+            newPattern = this.currentPattern[0].map((_, colIndex) =>
+                this.currentPattern.map(row => row[row.length - 1 - colIndex])
+            ).reverse();
+        } else {
+            throw new Error("Invalid direction! Use 'clockwise' or 'counterclockwise'.");
         }
-    }
 
-    public rotate() {
-        const newPattern = this.currentPattern[0].map((_, colIndex) => {
-            return this.currentPattern.map(row => row[colIndex]).reverse();
-        });
         this.currentPattern = newPattern;
-
-        this.removeAll(true);
-        this.renderPattern(newPattern);
-
-        this.x = Phaser.Math.Clamp(this.x, 0, CONFIG.cols * CONFIG.blockSize - this.shapeWidth);
+        this.updateDimensions();
     }
 
-    private renderPattern(pattern: number[][]) {
-        for (let row = 0; row < pattern.length; row++) {
-            for (let col = 0; col < pattern[row].length; col++) {
-                if (pattern[row][col] === 1) {
-                    const x = col * this.blockSize;
-                    const y = row * this.blockSize;
-                    const block = this.scene.add.image(x, y, ASSETS.images.block);
-                    block.setOrigin(0, 0)
-                    block.setTint(this.tintColor);
-                    this.add(block);
+    public getBlockPositions(): { x: number; y: number }[] {
+        const positions: { x: number; y: number }[] = [];
+        for (let row = 0; row < this.currentPattern.length; row++) {
+            for (let col = 0; col < this.currentPattern[row].length; col++) {
+                if (this.currentPattern[row][col] === 1) {
+                    positions.push({
+                        x: this.x + col,
+                        y: this.y + row
+                    });
                 }
             }
         }
+        return positions;
+    }
 
-        this.shapeHeight = this.getShapeHeight();
-        this.shapeWidth = this.getShapeWidth();
+    public getType() {
+        return this.shapeType;
+    }
+
+    public getColor() {
+        return this.tintColor;
+    }
+
+    public clone(): Shape {
+        const copy = new Shape(this.x, this.y, this.shapeType);
+        copy.currentPattern = this.currentPattern.map(row => [...row]);
+        return copy;
     }
 }
