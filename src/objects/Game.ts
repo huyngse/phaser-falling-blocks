@@ -4,10 +4,14 @@ import Shape from "./Shape";
 
 export default class Game {
     private board: number[][];
-    private _score = 0;
     private currentShape: Shape | null = null;
+    private _score = 0;
     private _nextShape: Shape | null = null;
     private _isOver = false;
+
+    public get score() { return this._score; }
+    public get isOver() { return this._isOver; }
+    public get nextShape() { return this._nextShape; }
 
     constructor(
         private readonly width: number,
@@ -21,7 +25,7 @@ export default class Game {
         if (this.currentShape) {
             const oldY = this.currentShape.y;
             this.currentShape.move("down");
-            
+
             if (this.currentShape.y == oldY) {
                 this.lockShape();
                 this.clearFullLines();
@@ -41,6 +45,10 @@ export default class Game {
         }
         this.currentShape = this._nextShape;
         this._nextShape = new Shape(Math.floor(this.width / 2) - 1, 0, this.getRandomShapeType());
+
+        if (this.checkCollision(this.currentShape.x, this.currentShape.y, this.currentShape.currentPattern)) {
+            this._isOver = true;
+        }
     }
 
     private checkCollision(x: number, y: number, pattern: number[][]): boolean {
@@ -53,7 +61,7 @@ export default class Game {
                     boardX < 0 ||
                     boardX >= this.width ||
                     boardY >= this.height ||
-                    (boardY >= 0 && this.board[row][col] !== 0)
+                    (boardY >= 0 && this.board[boardY][boardX] !== 0)
                 ) {
                     return true;
                 }
@@ -66,7 +74,7 @@ export default class Game {
         if (!this.currentShape) return;
         for (const { x, y } of this.currentShape.getBlockPositions()) {
             if (y >= 0 && y < this.height && x >= 0 && x < this.width) {
-                this.board[y][x] = this.currentShape.getColor();
+                this.board[y][x] = this.currentShape.color;
             }
         }
     }
@@ -100,22 +108,10 @@ export default class Game {
         if (this.currentShape) {
             for (const { x, y } of this.currentShape.getBlockPositions()) {
                 if (y >= 0 && y < this.height && x >= 0 && x < this.width) {
-                    displayBoard[y][x] = this.currentShape.getColor();
+                    displayBoard[y][x] = this.currentShape.color;
                 }
             }
         }
         return displayBoard;
-    }
-
-    public get score() {
-        return this._score;
-    }
-
-    public get isOver() {
-        return this._isOver;
-    }
-
-    public get nextShape() {
-        return this._nextShape;
     }
 }

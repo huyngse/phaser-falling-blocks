@@ -2,36 +2,43 @@ import type { ShapeType } from "../types/shape";
 import { SHAPES, SHAPE_COLORS } from "../constants/shape";
 
 export default class Shape {
-    public shapeWidth = 0;
-    public shapeHeight = 0;
-    public currentPattern!: number[][];
-    private tintColor = 0xffffff;
+    private _width = 0;
+    private _height = 0;
+    private _currentPattern!: number[][];
+    private _tintColor = 0xffffff;
     private _x: number;
     private _y: number;
+    private _type: ShapeType;
 
     public get x() { return this._x; }
     public get y() { return this._y; }
+    public get width() { return this._width }
+    public get height() { return this._height }
+    public get color() { return this._tintColor }
+    public get currentPattern() { return this._currentPattern }
+    public get type() { return this._type }
 
     constructor(
         x: number,
         y: number,
-        private shapeType: ShapeType
+        type: ShapeType
     ) {
         this._x = x;
         this._y = y;
+        this._type = type;
         this.createBlock();
     }
 
     private createBlock() {
-        const shapePattern = SHAPES[this.shapeType];
-        this.currentPattern = shapePattern.map(row => [...row]);
-        this.tintColor = SHAPE_COLORS[this.shapeType] || 0xffffff;
+        const shapePattern = SHAPES[this._type];
+        this._currentPattern = shapePattern.map(row => [...row]);
+        this._tintColor = SHAPE_COLORS[this._type] || 0xffffff;
         this.updateDimensions();
     }
 
     private updateDimensions() {
-        this.shapeHeight = this.currentPattern.length;
-        this.shapeWidth = this.currentPattern[0].length;
+        this._height = this._currentPattern.length;
+        this._width = this._currentPattern[0].length;
     }
 
     public move(
@@ -53,7 +60,7 @@ export default class Shape {
                 break;
         }
 
-        if (!checkCollision || !checkCollision(newX, newY, this.currentPattern)) {
+        if (!checkCollision || !checkCollision(newX, newY, this._currentPattern)) {
             this._x = newX;
             this._y = newY;
         }
@@ -62,26 +69,26 @@ export default class Shape {
     public rotate(direction: 'clockwise' | "counterclockwise" = 'clockwise') {
         let newPattern;
         if (direction === 'clockwise') {
-            newPattern = this.currentPattern[0].map((_, colIndex) =>
-                this.currentPattern.map(row => row[colIndex]).reverse()
+            newPattern = this._currentPattern[0].map((_, colIndex) =>
+                this._currentPattern.map(row => row[colIndex]).reverse()
             );
         } else if (direction === 'counterclockwise') {
-            newPattern = this.currentPattern[0].map((_, colIndex) =>
-                this.currentPattern.map(row => row[row.length - 1 - colIndex])
+            newPattern = this._currentPattern[0].map((_, colIndex) =>
+                this._currentPattern.map(row => row[row.length - 1 - colIndex])
             ).reverse();
         } else {
             throw new Error("Invalid direction! Use 'clockwise' or 'counterclockwise'.");
         }
 
-        this.currentPattern = newPattern;
+        this._currentPattern = newPattern;
         this.updateDimensions();
     }
 
     public getBlockPositions(): { x: number; y: number }[] {
         const positions: { x: number; y: number }[] = [];
-        for (let row = 0; row < this.currentPattern.length; row++) {
-            for (let col = 0; col < this.currentPattern[row].length; col++) {
-                if (this.currentPattern[row][col] === 1) {
+        for (let row = 0; row < this._currentPattern.length; row++) {
+            for (let col = 0; col < this._currentPattern[row].length; col++) {
+                if (this._currentPattern[row][col] === 1) {
                     positions.push({
                         x: this.x + col,
                         y: this.y + row
@@ -92,17 +99,9 @@ export default class Shape {
         return positions;
     }
 
-    public getType() {
-        return this.shapeType;
-    }
-
-    public getColor() {
-        return this.tintColor;
-    }
-
     public clone(): Shape {
-        const copy = new Shape(this.x, this.y, this.shapeType);
-        copy.currentPattern = this.currentPattern.map(row => [...row]);
+        const copy = new Shape(this.x, this.y, this._type);
+        copy._currentPattern = this._currentPattern.map(row => [...row]);
         return copy;
     }
 }
