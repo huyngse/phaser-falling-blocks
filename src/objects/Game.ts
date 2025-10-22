@@ -24,9 +24,9 @@ export default class Game {
         if (this._isOver) return;
         if (this.currentShape) {
             const oldY = this.currentShape.y;
-            this.currentShape.move("down");
+            this.currentShape.move("down", this.checkCollision.bind(this));
 
-            if (this.currentShape.y == oldY) {
+            if (this.currentShape.y === oldY) {
                 this.lockShape();
                 this.clearFullLines();
                 this.spawnNewShape();
@@ -39,7 +39,7 @@ export default class Game {
         return shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
     }
 
-    private spawnNewShape() {
+    public spawnNewShape() {
         if (!this._nextShape) {
             this._nextShape = new Shape(Math.floor(this.width / 2) - 1, 0, this.getRandomShapeType());
         }
@@ -59,7 +59,7 @@ export default class Game {
                 const boardY = y + row;
                 if (
                     boardX < 0 ||
-                    boardX >= this.width ||
+                    boardX >= this.width || 
                     boardY >= this.height ||
                     (boardY >= 0 && this.board[boardY][boardX] !== 0)
                 ) {
@@ -91,7 +91,7 @@ export default class Game {
 
     public moveShape(direction: "left" | "right" | "down") {
         if (this._isOver || !this.currentShape) return;
-        this.currentShape.move(direction, this.checkCollision);
+        this.currentShape.move(direction, this.checkCollision.bind(this));
     }
 
     public rotateShape(direction: 'clockwise' | "counterclockwise" = 'clockwise') {

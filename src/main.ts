@@ -18,7 +18,6 @@ window.addEventListener('unhandledrejection', function (event) {
   window.location.reload();
 });
 
-
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   width: 800,
