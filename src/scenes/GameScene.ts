@@ -22,6 +22,10 @@ export default class GameScene extends Phaser.Scene {
         this.gameLogic = new Game(CONFIG.cols, CONFIG.rows);
         this.gameLogic.onScoreChange = (score) => {
             this.events.emit("scoreChanged", score);
+        };
+        this.gameLogic.onQueueChange = (queue) => {
+            const queueData = queue.map(shape => shape.type);
+            this.events.emit("queueChanged", queueData);
         }
 
         this.add.image(0, 0, ASSETS.images.background).setDepth(-1).setOrigin(0, 0);
@@ -52,7 +56,9 @@ export default class GameScene extends Phaser.Scene {
             this.input.keyboard.on("keydown-X", () => this.gameLogic.rotateShape("clockwise"));
         }
 
-        this.gameLogic.spawnNewShape();
+        this.time.delayedCall(500, () => {
+            this.gameLogic.spawnNewShape();
+        })
     }
 
     update(_time: number, delta: number) {

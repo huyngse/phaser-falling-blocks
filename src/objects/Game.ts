@@ -6,18 +6,20 @@ export default class Game {
     private board: number[][];
     private currentShape: Shape | null = null;
     private _score = 0;
-    private _nextShape: Shape | null = null;
     private _isOver = false;
+    private spawnQueue: Shape[] = [];
 
     public onScoreChange?: (score: number) => void;
+    public onQueueChange?: (queue: Shape[]) => void;
 
     public get score() { return this._score; }
     public get isOver() { return this._isOver; }
-    public get nextShape() { return this._nextShape; }
+    public get nextShapes() { return this.spawnQueue; }
 
     constructor(
         private readonly width: number,
-        private readonly height: number
+        private readonly height: number,
+        private readonly queueSize: number = 3,
     ) {
         this.board = Array.from({ length: height }, () => Array(width).fill(0));
     }
@@ -34,6 +36,17 @@ export default class Game {
                 this.spawnNewShape();
             }
         }
+        this.initializeQueue();
+    }
+
+    private createRandomShape() {
+        return new Shape(Math.floor(this.width / 2) - 1, 0, this.getRandomShapeType());
+    }
+
+    private initializeQueue() {
+        while (this.spawnQueue.length < this.queueSize) {
+            this.spawnQueue.push(this.createRandomShape());
+        }
     }
 
     private getRandomShapeType() {
@@ -42,12 +55,12 @@ export default class Game {
     }
 
     public spawnNewShape() {
-        if (!this._nextShape) {
-            this._nextShape = new Shape(Math.floor(this.width / 2) - 1, 0, this.getRandomShapeType());
+        if (this.spawnQueue.length === 0) {
+            this.initializeQueue();
         }
-        this.currentShape = this._nextShape;
-        this._nextShape = new Shape(Math.floor(this.width / 2) - 1, 0, this.getRandomShapeType());
-
+        this.currentShape = this.spawnQueue.shift()!;
+        this.spawnQueue.push(this.createRandomShape());
+        this.onQueueChange?.([...this.spawnQueue]);
         if (this.checkCollision(this.currentShape.x, this.currentShape.y, this.currentShape.currentPattern)) {
             this._isOver = true;
         }
