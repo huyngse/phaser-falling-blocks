@@ -9,6 +9,8 @@ export default class Game {
     private _nextShape: Shape | null = null;
     private _isOver = false;
 
+    public onScoreChange?: (score: number) => void;
+
     public get score() { return this._score; }
     public get isOver() { return this._isOver; }
     public get nextShape() { return this._nextShape; }
@@ -59,7 +61,7 @@ export default class Game {
                 const boardY = y + row;
                 if (
                     boardX < 0 ||
-                    boardX >= this.width || 
+                    boardX >= this.width ||
                     boardY >= this.height ||
                     (boardY >= 0 && this.board[boardY][boardX] !== 0)
                 ) {
@@ -86,7 +88,11 @@ export default class Game {
             newBoard.unshift(Array(this.width).fill(0));
         }
         this.board = newBoard;
-        this._score += clearedLines * 100;
+
+        if (clearedLines > 0) {
+            this._score += clearedLines * 100;
+            this.onScoreChange?.(this._score);
+        }
     }
 
     public moveShape(direction: "left" | "right" | "down") {

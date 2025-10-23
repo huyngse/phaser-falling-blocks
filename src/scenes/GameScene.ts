@@ -17,8 +17,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
+        this.scene.launch("HudScene");
         this.graphics = this.add.graphics();
         this.gameLogic = new Game(CONFIG.cols, CONFIG.rows);
+        this.gameLogic.onScoreChange = (score) => {
+            this.events.emit("scoreChanged", score);
+        }
 
         this.add.image(0, 0, ASSETS.images.background).setDepth(-1).setOrigin(0, 0);
 
