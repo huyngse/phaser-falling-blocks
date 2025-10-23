@@ -10,6 +10,7 @@ export default class GameScene extends Phaser.Scene {
     private dropInteval = CONFIG.dropInteval;
     private dropTimer = 0;
     private graphics!: Phaser.GameObjects.Graphics;
+    private tileSprites: Phaser.GameObjects.Image[][] = [];
 
     constructor() {
         super("GameScene");
@@ -19,12 +20,24 @@ export default class GameScene extends Phaser.Scene {
         this.graphics = this.add.graphics();
         this.gameLogic = new Game(CONFIG.cols, CONFIG.rows);
 
-        // this.add.image(0, 0, ASSETS.images.background).setDepth(-1).setOrigin(0, 0);
+        this.add.image(0, 0, ASSETS.images.background).setDepth(-1).setOrigin(0, 0);
 
-        // this.graphics.lineStyle(1, 0xffffff, 1);
-        // this.graphics.strokeRect(275, 65, 250, 500);
+        this.playfield = this.add.container(275, 15);
 
-        this.playfield = this.add.container(275, 65);
+        for (let row = CONFIG.hiddenRows; row < CONFIG.rows; row++) {
+            this.tileSprites[row] = [];
+            for (let col = 0; col < CONFIG.cols; col++) {
+                const tileImage = this.add.image(
+                    col * this.tileSize,
+                    row * this.tileSize,
+                    ASSETS.images.block
+                );
+                tileImage.setOrigin(0, 0);
+                tileImage.setVisible(false);
+                this.playfield.add(tileImage);
+                this.tileSprites[row][col] = tileImage;
+            }
+        }
 
         if (this.input.keyboard) {
             this.input.keyboard.on("keydown-LEFT", () => this.gameLogic.moveShape("left"));
@@ -38,7 +51,7 @@ export default class GameScene extends Phaser.Scene {
         this.gameLogic.spawnNewShape();
     }
 
-    update(time: number, delta: number) {
+    update(_time: number, delta: number) {
         if (this.gameLogic.isOver) {
             return;
         }
@@ -57,25 +70,15 @@ export default class GameScene extends Phaser.Scene {
         const cols = board[0].length;
 
         this.graphics.clear();
-        for (let row = 0; row < rows; row++) {
+        for (let row = CONFIG.hiddenRows; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
                 const color = board[row][col];
+                const tile = this.tileSprites[row][col];
                 if (color !== 0) {
-                    this.graphics.fillStyle(color, 1);
-                    this.graphics.fillRect(
-                        col * this.tileSize,
-                        row * this.tileSize,
-                        this.tileSize - 1,
-                        this.tileSize - 1
-                    );
+                    tile.setVisible(true);
+                    tile.setTint(color);
                 } else {
-                    this.graphics.lineStyle(1, 0x222222, 0.2);
-                    this.graphics.strokeRect(
-                        col * this.tileSize,
-                        row * this.tileSize,
-                        this.tileSize,
-                        this.tileSize
-                    );
+                    tile.setVisible(false);
                 }
             }
         }
