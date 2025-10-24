@@ -12,9 +12,13 @@ export default class Game {
     private spawnQueue: Shape[] = [];
     private linesClearedTotal = 0;
 
+    private heldShape: Shape | null = null;
+    private canHold = true;
+
     public onScoreChange?: (score: number) => void;
     public onQueueChange?: (queue: Shape[]) => void;
     public onLevelChange?: (level: number) => void;
+    public onHoldChange?: (shape: Shape | null) => void;
 
     public get score() { return this._score; }
     public get level() { return this._level; }
@@ -67,6 +71,7 @@ export default class Game {
         }
         this.currentShape = this.spawnQueue.shift()!;
         this.spawnQueue.push(this.createRandomShape());
+        this.canHold = true;
         this.onQueueChange?.([...this.spawnQueue]);
         if (this.board.isCollision(this.currentShape.x, this.currentShape.y, this.currentShape.currentPattern)) {
             this._isOver = true;
@@ -106,6 +111,23 @@ export default class Game {
         }
     }
 
+    public holdShape() {
+        if (!this.currentShape || !this.canHold) return;
+        if (this.heldShape) {
+            const temp = this.currentShape;
+            this.currentShape = this.heldShape;
+            this.currentShape.x = Math.floor(this.width / 2) - 1;
+            this.currentShape.y = 0;
+            this.heldShape = temp;
+        } else {
+            this.heldShape = this.currentShape;
+            this.spawnNewShape();
+        }
+
+        this.canHold = false;
+        this.onHoldChange?.(this.heldShape);
+    }
+
     public getBoard(): number[][] {
         const displayBoard = this.board.getBoard();
         if (this.currentShape) {
@@ -116,5 +138,9 @@ export default class Game {
             }
         }
         return displayBoard;
+    }
+
+    public getHeldShape() {
+        return this.heldShape;
     }
 }

@@ -31,6 +31,9 @@ export default class GameScene extends Phaser.Scene {
             this.events.emit("levelChanged", level);
             this.updateDropSpeed(level);
         }
+        this.gameLogic.onHoldChange = (shape) => {
+            this.events.emit("holdChanged", shape ? shape.type : null);
+        }
 
         this.add.image(0, 0, ASSETS.images.background).setDepth(-1).setOrigin(0, 0);
 
@@ -58,6 +61,7 @@ export default class GameScene extends Phaser.Scene {
             this.input.keyboard.on("keydown-UP", () => this.gameLogic.rotateShape("clockwise"));
             this.input.keyboard.on("keydown-Z", () => this.gameLogic.rotateShape("counterclockwise"));
             this.input.keyboard.on("keydown-X", () => this.gameLogic.rotateShape("clockwise"));
+            this.input.keyboard.on("keydown-SHIFT", () => this.gameLogic.holdShape());
         }
 
         this.time.delayedCall(500, () => {

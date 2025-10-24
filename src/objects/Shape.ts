@@ -18,6 +18,9 @@ export default class Shape {
     public get currentPattern() { return this._currentPattern }
     public get type() { return this._type }
 
+    public set x(value: number) { this._x = value }
+    public set y(value: number) { this._y = value }
+
     constructor(
         x: number,
         y: number,
