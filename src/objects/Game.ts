@@ -7,12 +7,16 @@ export default class Game {
     private currentShape: Shape | null = null;
     private _score = 0;
     private _isOver = false;
+    private _level = 1;
     private spawnQueue: Shape[] = [];
+    private linesClearedTotal = 0;
 
     public onScoreChange?: (score: number) => void;
     public onQueueChange?: (queue: Shape[]) => void;
+    public onLevelChange?: (level: number) => void;
 
     public get score() { return this._score; }
+    public get level() { return this._level; }
     public get isOver() { return this._isOver; }
     public get nextShapes() { return this.spawnQueue; }
 
@@ -32,7 +36,8 @@ export default class Game {
 
             if (this.currentShape.y === oldY) {
                 this.lockShape();
-                this.clearFullLines();
+                const cleared = this.clearFullLines();
+                if (cleared > 0) this.updateLevel();
                 this.spawnNewShape();
             }
         }
@@ -103,8 +108,32 @@ export default class Game {
         this.board = newBoard;
 
         if (clearedLines > 0) {
-            this._score += clearedLines * 100;
+            let scoreToAdd = clearedLines * 100;
+            switch (clearedLines) {
+                case 2:
+                    scoreToAdd += 50;
+                    break;
+                case 3:
+                    scoreToAdd += 150;
+                    break;
+                case 4:
+                    scoreToAdd += 400;
+                    break;
+            }
+
+            this._score += scoreToAdd;
+            this.linesClearedTotal += clearedLines;
             this.onScoreChange?.(this._score);
+        }
+
+        return clearedLines;
+    }
+
+    private updateLevel() {
+        const newLevel = Math.floor(this.linesClearedTotal / 10) + 1;
+        if (newLevel > this._level) {
+            this._level = newLevel;
+            this.onLevelChange?.(this._level);
         }
     }
 

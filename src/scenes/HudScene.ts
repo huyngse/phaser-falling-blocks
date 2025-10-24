@@ -9,6 +9,7 @@ export default class HudScene extends Phaser.Scene {
     private scoreText!: Phaser.GameObjects.Text;
     private starImage!: Phaser.GameObjects.Image;
     private queueGroup!: Phaser.GameObjects.Group;
+    private levelText!: Phaser.GameObjects.Text;
 
     private readonly queueStart = { x: 595, y: 140 };
     private readonly queueSpacing = 55;
@@ -20,6 +21,7 @@ export default class HudScene extends Phaser.Scene {
     create() {
         this.createScoreDisplay();
         this.createQueueDisplay();
+        this.createLevelDisplay();
 
         this.registerGameEvents();
     }
@@ -46,15 +48,28 @@ export default class HudScene extends Phaser.Scene {
         this.queueGroup = this.add.group();
     }
 
+    private createLevelDisplay() {
+        this.add.image(550, 310, ASSETS.images.level_bg).setOrigin(0, 0);
+        this.levelText = this.add.text(587, 345, "1", {
+            fontSize: "36px",
+            fontFamily: "Quicksand",
+            letterSpacing: 1
+        }).setOrigin(0.5, 0);
+    }
+
     private registerGameEvents() {
         const gameScene = this.scene.get("GameScene");
         gameScene.events.on("scoreChanged", this.updateScore, this);
-
         gameScene.events.on("queueChanged", this.updateQueue, this);
+        gameScene.events.on("levelChanged", this.updateLevel, this);
     }
 
     private updateScore(score: number) {
         this.scoreText.setText(score.toString().padStart(6, "0"));
+    }
+
+    private updateLevel(level: number) {
+        this.levelText.setText(level.toString());
     }
 
     private updateQueue(queue: ShapeType[]) {

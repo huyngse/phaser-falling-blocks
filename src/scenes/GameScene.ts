@@ -7,7 +7,7 @@ export default class GameScene extends Phaser.Scene {
     private gameLogic!: Game;
     private playfield!: Phaser.GameObjects.Container;
     private tileSize = CONFIG.tileSize;
-    private dropInteval = CONFIG.dropInteval;
+    private dropInterval = CONFIG.dropInterval;
     private dropTimer = 0;
     private graphics!: Phaser.GameObjects.Graphics;
     private tileSprites: Phaser.GameObjects.Image[][] = [];
@@ -26,6 +26,10 @@ export default class GameScene extends Phaser.Scene {
         this.gameLogic.onQueueChange = (queue) => {
             const queueData = queue.map(shape => shape.type);
             this.events.emit("queueChanged", queueData);
+        }
+        this.gameLogic.onLevelChange = (level) => {
+            this.events.emit("levelChanged", level);
+            this.updateDropSpeed(level);
         }
 
         this.add.image(0, 0, ASSETS.images.background).setDepth(-1).setOrigin(0, 0);
@@ -67,9 +71,9 @@ export default class GameScene extends Phaser.Scene {
         }
 
         this.dropTimer += delta;
-        if (this.dropTimer > this.dropInteval) {
+        if (this.dropTimer >= this.dropInterval) {
             this.gameLogic.update();
-            this.dropTimer -= this.dropInteval;
+            this.dropTimer -= this.dropInterval;
         }
         this.drawBoard();
     }
@@ -92,5 +96,9 @@ export default class GameScene extends Phaser.Scene {
                 }
             }
         }
+    }
+
+    private updateDropSpeed(level: number) {
+        this.dropInterval = Math.max(CONFIG.dropInterval * 0.9 ** (level - 1), 150);
     }
 }
