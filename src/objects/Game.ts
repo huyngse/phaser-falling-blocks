@@ -128,8 +128,28 @@ export default class Game {
         this.onHoldChange?.(this.heldShape);
     }
 
+    private getGhostShape(): Shape | null {
+        if (!this.currentShape) return null;
+        const ghost = this.currentShape.clone();
+
+        while (!this.board.isCollision(ghost.x, ghost.y + 1, ghost.currentPattern)) {
+            ghost.y += 1;
+        }
+        return ghost;
+    }
+
     public getBoard(): number[][] {
         const displayBoard = this.board.getBoard();
+
+        const ghost = this.getGhostShape();
+        if (ghost) {
+            for (const { x, y } of ghost.getBlockPositions()) {
+                if (y >= 0 && y < this.height && x >= 0 && x < this.width) {
+                    displayBoard[y][x] = -1;
+                }
+            }
+        }
+
         if (this.currentShape) {
             for (const { x, y } of this.currentShape.getBlockPositions()) {
                 if (y >= 0 && y < this.height && x >= 0 && x < this.width) {

@@ -9,8 +9,8 @@ export default class GameScene extends Phaser.Scene {
     private tileSize = CONFIG.tileSize;
     private dropInterval = CONFIG.dropInterval;
     private dropTimer = 0;
-    private graphics!: Phaser.GameObjects.Graphics;
     private tileSprites: Phaser.GameObjects.Image[][] = [];
+    private previousBoard: number[][] = [];
 
     constructor() {
         super("GameScene");
@@ -18,7 +18,6 @@ export default class GameScene extends Phaser.Scene {
 
     create() {
         this.scene.launch("HudScene");
-        this.graphics = this.add.graphics();
         this.gameLogic = new Game(CONFIG.cols, CONFIG.rows);
         this.gameLogic.onScoreChange = (score) => {
             this.events.emit("scoreChanged", score);
@@ -87,17 +86,26 @@ export default class GameScene extends Phaser.Scene {
         const rows = board.length;
         const cols = board[0].length;
 
-        this.graphics.clear();
         for (let row = CONFIG.hiddenRows; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
                 const color = board[row][col];
+                if (!this.previousBoard[row]) this.previousBoard[row] = [];
+                if (this.previousBoard[row][col] === color) continue;
+
                 const tile = this.tileSprites[row][col];
-                if (color !== 0) {
+                if (color === -1) {
+                    tile.setVisible(true);
+                    tile.setTint(0xffffff);
+                    tile.setAlpha(0.2);
+                } else if (color !== 0) {
                     tile.setVisible(true);
                     tile.setTint(color);
+                    tile.setAlpha(1);
                 } else {
                     tile.setVisible(false);
                 }
+
+                this.previousBoard[row][col] = color;
             }
         }
     }
