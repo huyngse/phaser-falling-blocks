@@ -10,11 +10,21 @@ export default class HudScene extends Phaser.Scene {
     private starImage!: Phaser.GameObjects.Image;
     private queueGroup!: Phaser.GameObjects.Group;
 
+    private readonly queueStart = { x: 595, y: 140 };
+    private readonly queueSpacing = 55;
+
     constructor() {
         super("HudScene");
     }
 
     create() {
+        this.createScoreDisplay();
+        this.createQueueDisplay();
+
+        this.registerGameEvents();
+    }
+
+    private createScoreDisplay() {
         const { width } = this.scale;
         this.scoreText = this.add.text(0, 0, "000000", {
             fontSize: "28px",
@@ -29,48 +39,59 @@ export default class HudScene extends Phaser.Scene {
         const startX = (width - totalWidth) / 2;
         this.starImage.setPosition(startX, 22);
         this.scoreText.setPosition(startX + spacing + this.starImage.width, 20);
+    }
 
+    private createQueueDisplay() {
         this.add.image(550, 70, ASSETS.images.next_bg).setOrigin(0, 0);
         this.queueGroup = this.add.group();
-        const previewStartX = 595;
-        const previewStartY = 140;
-
-        const gameScene = this.scene.get("GameScene");
-        gameScene.events.on("scoreChanged", (score: number) => {
-            this.scoreText.setText(String(score).padStart(6, "0"));
-        });
-
-        gameScene.events.on("queueChanged", (queue: ShapeType[]) => {
-            this.updateQueueDisplay(queue, previewStartX, previewStartY);
-        });
     }
 
-    private updateQueueDisplay(queue: ShapeType[], x: number, y: number) {
+    private registerGameEvents() {
+        const gameScene = this.scene.get("GameScene");
+        gameScene.events.on("scoreChanged", this.updateScore, this);
+
+        gameScene.events.on("queueChanged", this.updateQueue, this);
+    }
+
+    private updateScore(score: number) {
+        this.scoreText.setText(score.toString().padStart(6, "0"));
+    }
+
+    private updateQueue(queue: ShapeType[]) {
         this.queueGroup.clear(true, true);
 
-        const spacingY = 55;
+        queue.forEach((shape, index) => {
+            const preview = this.createShapePreview(shape);
+            const bounds = preview.getBounds();
 
-        queue.forEach((shape, i) => {
-            const shapeContainer = this.createShapePreview(shape, x, y + i * spacingY);
-            const bounds = shapeContainer.getBounds();
-            shapeContainer.x = x - bounds.width / 2;
-            shapeContainer.y = y + i * spacingY - bounds.height / 2;
-            this.queueGroup.add(shapeContainer);
+            preview.setPosition(
+                this.queueStart.x - bounds.width / 2,
+                this.queueStart.y + index * this.queueSpacing - bounds.height / 2
+            );
+
+            this.queueGroup.add(preview);
         });
     }
 
-    private createShapePreview(shape: ShapeType, x: number, y: number): Phaser.GameObjects.Container {
-        const container = this.add.container(x, y);
+    private createShapePreview(shape: ShapeType): Phaser.GameObjects.Container {
+        const container = this.add.container(0, 0);
         const color = SHAPE_COLORS[shape];
         const layout = SHAPES[shape];
-        for (let row = 0; row < layout.length; row++) {
-            for (let col = 0; col < layout[row].length; col++) {
-                if (layout[row][col] === 0) continue;
-                const image = this.add.image(col * CONFIG.tileSize, row * CONFIG.tileSize, ASSETS.images.block);
-                image.setTint(brightenColor(color, 0.5));
-                container.add(image);
-            }
-        }
+
+        layout.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                if (cell === 0) return;
+                const block = this.add.image(
+                    colIndex * CONFIG.tileSize,
+                    rowIndex * CONFIG.tileSize,
+                    ASSETS.images.block
+                );
+
+                block.setTint(brightenColor(color, 0.5));
+                container.add(block);
+            })
+        })
+
         container.setScale(0.6);
         return container;
     }
