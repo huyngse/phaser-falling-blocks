@@ -19,6 +19,7 @@ export default class Game {
     public onQueueChange?: (queue: Shape[]) => void;
     public onLevelChange?: (level: number) => void;
     public onHoldChange?: (shape: Shape | null) => void;
+    public onLockShape?: (cleared: number) => void;
 
     public get score() { return this._score; }
     public get level() { return this._level; }
@@ -44,6 +45,7 @@ export default class Game {
             if (this.currentShape.y === oldY) {
                 this.board.lockShape(this.currentShape);
                 const cleared = this.board.clearFullLines();
+                this.onLockShape?.(cleared);
                 if (cleared > 0) this.updateScoreAndLevel(cleared);
                 this.spawnNewShape();
             }

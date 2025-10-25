@@ -14,6 +14,11 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image(ASSETS.images.level_bg, "assets/images/level-bg.png");
         this.load.image(ASSETS.images.next_bg, "assets/images/next-bg.png");
         this.load.image(ASSETS.images.star, "assets/images/star.png");
+
+        this.load.audio(ASSETS.sounds.clear, "assets/sounds/impact2.wav");
+        this.load.audio(ASSETS.sounds.hit, "assets/sounds/impact1.wav");
+        this.load.audio(ASSETS.sounds.hold, "assets/sounds/button10.wav");
+        this.load.audio(ASSETS.sounds.levelUp, "assets/sounds/button7.wav");
     }
 
     create() {

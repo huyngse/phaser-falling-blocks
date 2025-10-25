@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { ASSETS } from "../config/assetKeys";
 import { CONFIG } from "../config/gameConfig";
 import Game from "../objects/Game";
+import SoundManager from "../utils/SoundManager";
 
 export default class GameScene extends Phaser.Scene {
     private gameLogic!: Game;
@@ -11,6 +12,7 @@ export default class GameScene extends Phaser.Scene {
     private dropTimer = 0;
     private tileSprites: Phaser.GameObjects.Image[][] = [];
     private previousBoard: number[][] = [];
+    private soundManager!: SoundManager;
 
     constructor() {
         super("GameScene");
@@ -18,6 +20,8 @@ export default class GameScene extends Phaser.Scene {
 
     create() {
         this.scene.launch("HudScene");
+        this.soundManager = SoundManager.getInstance(this);
+
         this.gameLogic = new Game(CONFIG.cols, CONFIG.rows);
         this.gameLogic.onScoreChange = (score) => {
             this.events.emit("scoreChanged", score);
@@ -29,9 +33,18 @@ export default class GameScene extends Phaser.Scene {
         this.gameLogic.onLevelChange = (level) => {
             this.events.emit("levelChanged", level);
             this.updateDropSpeed(level);
+            this.soundManager.play(ASSETS.sounds.levelUp);
         }
         this.gameLogic.onHoldChange = (shape) => {
             this.events.emit("holdChanged", shape ? shape.type : null);
+            this.soundManager.play(ASSETS.sounds.hold);
+        }
+        this.gameLogic.onLockShape = (cleared) => {
+            if (cleared) {
+                this.soundManager.play(ASSETS.sounds.clear);
+            } else {
+                this.soundManager.play(ASSETS.sounds.hit);
+            }
         }
 
         this.add.image(0, 0, ASSETS.images.background).setDepth(-1).setOrigin(0, 0);

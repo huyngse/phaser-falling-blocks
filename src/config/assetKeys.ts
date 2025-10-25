@@ -9,6 +9,9 @@ export const ASSETS = {
         star: "star"
     },
     sounds: {
-
+        levelUp: "levelUp",
+        hold: "hold",
+        hit: "hit",
+        clear: "clear",
     }
 }
